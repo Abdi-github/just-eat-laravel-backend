@@ -1,0 +1,173 @@
+services:
+  # ── Laravel API ──
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: just-eat-api
+    ports:
+      - "4005:8000"
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:4005
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=just_eat_db
+      - DB_USERNAME=just_eat_user
+      - DB_PASSWORD=just_eat_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_STORE=redis
+      - QUEUE_CONNECTION=redis
+      - SESSION_DRIVER=redis
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=mailpit
+      - MAIL_PORT=1025
+      - MAIL_FROM_ADDRESS=noreply@just-eat-clone.ch
+      - MAIL_FROM_NAME="Just Eat Clone"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    networks:
+      - just-eat
+    restart: unless-stopped
+
+  # ── Queue Worker (Horizon) ──
+  horizon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: just-eat-horizon
+    command: php artisan horizon
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=just_eat_db
+      - DB_USERNAME=just_eat_user
+      - DB_PASSWORD=just_eat_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_STORE=redis
+      - QUEUE_CONNECTION=redis
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=mailpit
+      - MAIL_PORT=1025
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - just-eat
+    restart: unless-stopped
+
+  # ── Node.js (Vite dev server for admin panel HMR) ──
+  node:
+    image: node:22-alpine
+    container_name: just-eat-node
+    working_dir: /var/www/html
+    ports:
+      - "5175:5173"
+    volumes:
+      - .:/var/www/html
+      - node_modules:/var/www/html/node_modules
+    command: sh -c "if [ -f package.json ]; then npm install && npm run dev -- --host 0.0.0.0; else echo 'No package.json yet, sleeping...' && tail -f /dev/null; fi"
+    networks:
+      - just-eat
+    restart: unless-stopped
+
+  # ── MySQL 8.4 ──
+  mysql:
+    image: mysql:8.4
+    container_name: just-eat-mysql
+    ports:
+      - "3309:3306"
+    environment:
+      MYSQL_DATABASE: just_eat_db
+      MYSQL_USER: just_eat_user
+      MYSQL_PASSWORD: just_eat_password
+      MYSQL_ROOT_PASSWORD: root_secret
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_secret"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - just-eat
+    restart: unless-stopped
+
+  # ── Redis 7 ──
+  redis:
+    image: redis:7-alpine
+    container_name: just-eat-redis
+    ports:
+      - "6384:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - just-eat
+    restart: unless-stopped
+
+  # ── Mailpit (Email Testing) ──
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: just-eat-mailpit
+    ports:
+      - "1027:1025"
+      - "8029:8025"
+    networks:
+      - just-eat
+    restart: unless-stopped
+
+  # ── phpMyAdmin ──
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: just-eat-phpmyadmin
+    ports:
+      - "8086:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root_secret
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - just-eat
+    restart: unless-stopped
+
+volumes:
+  vendor:
+  node_modules:
+  mysql_data:
+  redis_data:
+
+networks:
+  just-eat:
+    driver: bridge
