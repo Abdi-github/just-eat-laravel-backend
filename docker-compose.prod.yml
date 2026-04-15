@@ -3,8 +3,8 @@ services:
     image: nginx:1.27-alpine
     container_name: justeat_laravel_nginx_prod
     restart: unless-stopped
-    ports:
-      - "${APP_PORT:-80}:80"
+    expose:
+      - "80"
     volumes:
       - app_public:/var/www/html/public:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
