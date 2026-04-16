@@ -132,7 +132,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: justeat_redis_prod
+    container_name: justeat_laravel_redis_prod
     restart: unless-stopped
     labels:
       - "sablier.enable=true"
