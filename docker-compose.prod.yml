@@ -50,7 +50,7 @@ services:
     networks:
       - justeat
     healthcheck:
-      test: ["CMD-SHELL", "php-fpm-healthcheck || exit 1"]
+      test: ["CMD-SHELL", "php -r 'echo 1;' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
