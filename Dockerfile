@@ -97,6 +97,18 @@ RUN composer install \
     --optimize-autoloader
 
 # ============================================================
+# Stage 3b: NODE — Build Vite/Inertia frontend assets
+# ============================================================
+FROM node:20-alpine AS node-builder
+
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci
+COPY vite.config.js tsconfig.json ./
+COPY resources/ resources/
+RUN npm run build
+
+# ============================================================
 # Stage 4: PRODUCTION — PHP-FPM only (nginx is separate)
 # ============================================================
 FROM base AS production
@@ -118,6 +130,9 @@ RUN addgroup -g 1000 laravel && adduser -u 1000 -G laravel -s /bin/sh -D laravel
 
 # Copy built artifacts from builder
 COPY --from=builder --chown=laravel:laravel /var/www/html /var/www/html
+
+# Copy Vite-built assets from node builder
+COPY --from=node-builder --chown=laravel:laravel /app/public/build /var/www/html/public/build
 
 # Set permissions
 RUN mkdir -p /var/www/html/storage/app/public \
