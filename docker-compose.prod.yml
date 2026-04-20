@@ -2,7 +2,7 @@ services:
   nginx:
     image: nginx:1.27-alpine
     container_name: justeat_laravel_nginx_prod
-    restart: unless-stopped
+    restart: no
     expose:
       - "80"
     volumes:
@@ -35,7 +35,7 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: justeat_laravel_api_prod
-    restart: unless-stopped
+    restart: no
     expose:
       - "9000"
     labels:
@@ -70,7 +70,7 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: justeat_laravel_horizon_prod
-    restart: unless-stopped
+    restart: no
     command: php artisan horizon
     labels:
       - "sablier.enable=true"
@@ -81,6 +81,8 @@ services:
       - app_storage:/var/www/html/storage
     depends_on:
       api:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - justeat
@@ -95,7 +97,7 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: justeat_laravel_scheduler_prod
-    restart: unless-stopped
+    restart: no
     command: >
       sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
     labels:
@@ -108,6 +110,8 @@ services:
     depends_on:
       api:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - justeat
     deploy:
@@ -118,7 +122,7 @@ services:
   mysql:
     image: mysql:8.4
     container_name: justeat_mysql_prod
-    restart: unless-stopped
+    restart: no
     labels:
       - "sablier.enable=true"
       - "sablier.group=justeat"
@@ -145,7 +149,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: justeat_laravel_redis_prod
-    restart: unless-stopped
+    restart: no
     labels:
       - "sablier.enable=true"
       - "sablier.group=justeat"

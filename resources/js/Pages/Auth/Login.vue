@@ -6,6 +6,7 @@ import Password from 'primevue/password';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Message from 'primevue/message';
+import Divider from 'primevue/divider';
 
 const { t } = useI18n();
 
@@ -14,6 +15,16 @@ const form = useForm({
     password: '',
     remember: false,
 });
+
+const demoAccounts = [
+    { label: 'Super Admin',   email: 'admin@just-eat-clone.ch',   color: '#d32f2f' },
+    { label: 'Support Agent', email: 'support@just-eat-clone.ch', color: '#1565c0' },
+];
+
+function fillDemoAccount(account: { email: string }) {
+    form.email = account.email;
+    form.password = 'password';
+}
 
 function submit() {
     form.post(route('login'), {
@@ -96,6 +107,23 @@ function submit() {
                         severity="warning"
                     />
                 </form>
+
+                <!-- Demo Accounts -->
+                <Divider align="center">
+                    <span class="text-xs text-gray-400 uppercase tracking-wider">Demo Accounts</span>
+                </Divider>
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <button
+                        v-for="account in demoAccounts"
+                        :key="account.email"
+                        type="button"
+                        @click="fillDemoAccount(account)"
+                        :style="{ backgroundColor: account.color }"
+                        class="px-3 py-1.5 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+                    >
+                        {{ account.label }}
+                    </button>
+                </div>
             </div>
         </div>
     </div>

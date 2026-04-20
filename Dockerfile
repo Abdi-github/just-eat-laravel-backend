@@ -96,11 +96,6 @@ RUN composer install \
     --prefer-dist \
     --optimize-autoloader
 
-# Cache config, routes, views
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
-
 # ============================================================
 # Stage 4: PRODUCTION — PHP-FPM only (nginx is separate)
 # ============================================================
@@ -134,8 +129,12 @@ RUN mkdir -p /var/www/html/storage/app/public \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
+# Copy entrypoint script
+COPY --chown=laravel:laravel docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 USER laravel
 
 EXPOSE 9000
 
-CMD ["php-fpm"]
+CMD ["/usr/local/bin/entrypoint.sh"]
