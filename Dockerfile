@@ -106,6 +106,8 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 COPY vite.config.js tsconfig.json ./
 COPY resources/ resources/
+# Ziggy is imported from vendor in app.ts
+COPY --from=builder /var/www/html/vendor/tightenco/ziggy vendor/tightenco/ziggy
 RUN npm run build
 
 # ============================================================
