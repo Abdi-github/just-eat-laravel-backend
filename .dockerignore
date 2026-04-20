@@ -9,6 +9,7 @@ yarn-error.log
 docker-compose*.yml
 Dockerfile*
 docker/
+!docker/entrypoint.sh
 .docker/
 tests/
 .phpunit.result.cache
